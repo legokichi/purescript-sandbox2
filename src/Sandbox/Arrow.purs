@@ -1,25 +1,55 @@
-module Sandbox.Arrow where
+module Sandbox.Arrow (main) where
 
-import Data.Eq (class Eq, (==))
+import Control.Applicative (pure)
+import Control.Bind ((>>=), discard {--, bind--})
+import Control.Semigroupoid ((>>>))
+import Data.Eq (class Eq  {--, (==)--})
+import Data.Either (Either(Left))
 import Data.Function (($), (#))
-import Data.Profunctor (dimap, arr)
-import Data.Profunctor.Choice
+import Data.Maybe (Maybe(Just {--, Nothing --}))
+import Data.Profunctor (class Profunctor  {--, dimap, arr--})
+import Data.Profunctor.Choice ((+++), (|||))
+import Data.Profunctor.Costrong (class Costrong, unfirst {--, unsecond--})
 import Data.Profunctor.Strong ((&&&), (***), first, second)
 import Data.Semigroup ((<>))
+import Data.Semiring ((+) {--, (*)--})
+-- import Data.Ring ((-))
 import Data.Show (class Show, show)
+import Data.Tuple (Tuple(Tuple))
+import Data.Typelevel.Undefined (undefined)
 import Data.Unit (Unit, unit)
-import Control.Applicative (pure)
-import Control.Bind (discard)
-import Control.Semigroupoid ((>>>))
+-- import Debug.Trace (spy)
 import Effect (Effect)
 import Effect.Console (log)
+-- import Unsafe.Coerce (unsafeCoerce)
+import Effect.Unsafe (unsafePerformEffect)
 
 main :: Effect Unit
 main = do
-  log "arrowDemo"
-  log $ show $ A # a2bc >>> bc2cc >>> cc2aa >>> (second a2b)
+  log "Arrow Demo"
+  log $ ("arrow: " <> _) $ show $ A # a2bc >>> bc2cc >>> cc2aa >>> (second a2b)
+  log $ ("choice: " <> _) $ show $ Left A # (a2b +++ a2c) >>> (b2c +++ c2a) >>> (c2a +++ a2b) >>> (a2c ||| b2c)
+  log $ ("loop: " <> _) $ show $ let Function' a2a = unfirst (Function' ooo) in a2a $ a2a A
+  log $ ("loopEff: " <> _) $ show $ let Function' a2a = unfirst (Function' iii) in a2a $ a2a A
   pure unit
   where
+  ooo :: (Tuple A (Maybe Int)) -> (Tuple A (Maybe Int))
+  ooo = case _ of
+    Tuple a (Just c) ->
+      Tuple a $ Just
+        $ unsafePerformEffect do
+            log "ooo"
+            pure $ c + 1
+    Tuple a _ -> Tuple a $ Just $ unsafePerformEffect $ (log "ooo") >>= \_ -> pure 0
+
+  iii :: (Tuple A (Effect Unit)) -> (Tuple A (Effect Unit))
+  iii (Tuple A eff) =
+    Tuple A
+      $ do
+          eff
+          log "never run"
+          pure unit
+
   a2b A = B
 
   a2c A = C
@@ -33,6 +63,33 @@ main = do
   bc2cc = first b2c
 
   cc2aa = (c2a *** c2a)
+
+--- for ArrowLoop
+newtype Function' a b
+  = Function' (a -> b)
+
+instance profunctorFn' :: Profunctor Function' where
+  dimap a2b c2d (Function' b2c) = Function' (a2b >>> b2c >>> c2d)
+
+instance costrongFn' :: Costrong Function' where
+  unfirst :: forall a b c. (Function' (Tuple a c) (Tuple b c)) -> Function' a b
+  unfirst (Function' f) =
+    Function' \a ->
+      let
+        (Tuple b c) = f (Tuple a c)
+      in
+        b
+    where
+    c = undefined
+  unsecond :: forall a b c. (Function' (Tuple a b) (Tuple a c)) -> Function' b c
+  unsecond (Function' f) =
+    Function' \b ->
+      let
+        (Tuple a c) = f (Tuple a b)
+      in
+        c
+    where
+    a = undefined
 
 data A
   = A

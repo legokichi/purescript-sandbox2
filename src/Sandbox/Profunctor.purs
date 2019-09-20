@@ -1,4 +1,4 @@
-module Sandbox.Profunctor where
+module Sandbox.Profunctor (main) where
 
 import Data.Eq (class Eq, (==))
 import Data.Function (($))
@@ -13,7 +13,7 @@ import Effect.Console (log)
 
 main :: Effect Unit
 main = do
-  log "dimapDemo"
+  log "Profunctor Demo"
   let
     a = dimap g i h
 

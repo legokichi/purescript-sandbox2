@@ -1,23 +1,18 @@
 module Main where
 
-import Sandbox.Arrow as SArrow
-import Sandbox.Profunctor as SProfunctor
-import Data.Eq (class Eq, (==))
-import Data.Function (($), (#))
-import Data.Profunctor (dimap, arr)
-import Data.Profunctor.Choice
-import Data.Profunctor.Strong ((&&&), (***), first, second)
-import Data.Semigroup ((<>))
-import Data.Show (class Show, show)
-import Data.Unit (Unit, unit)
 import Control.Applicative (pure)
 import Control.Bind (discard)
-import Control.Semigroupoid ((>>>))
+import Data.Unit (Unit, unit)
 import Effect (Effect)
-import Effect.Console (log)
+import Sandbox.Arrow as SArrow
+import Sandbox.ST as SST
+import Sandbox.Profunctor as SProfunctor
+import Sandbox.CommandTelemetry as CommandTelemetry
 
 main :: Effect Unit
 main = do
+  SST.main
   SProfunctor.main
   SArrow.main
+  CommandTelemetry.main
   pure unit
