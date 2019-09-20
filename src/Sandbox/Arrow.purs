@@ -6,6 +6,7 @@ import Control.Semigroupoid ((>>>))
 import Data.Eq (class Eq  {--, (==)--})
 import Data.Either (Either(Left))
 import Data.Function (($), (#))
+-- import Data.Lazy (Lazy, defer, force)
 import Data.Maybe (Maybe(Just {--, Nothing --}))
 import Data.Profunctor (class Profunctor  {--, dimap, arr--})
 import Data.Profunctor.Choice ((+++), (|||))
@@ -18,7 +19,7 @@ import Data.Show (class Show, show)
 import Data.Tuple (Tuple(Tuple))
 import Data.Typelevel.Undefined (undefined)
 import Data.Unit (Unit, unit)
--- import Debug.Trace (spy)
+import Debug.Trace (spy)
 import Effect (Effect)
 import Effect.Console (log)
 -- import Unsafe.Coerce (unsafeCoerce)
@@ -30,7 +31,7 @@ main = do
   log $ ("arrow: " <> _) $ show $ A # a2bc >>> bc2cc >>> cc2aa >>> (second a2b)
   log $ ("choice: " <> _) $ show $ Left A # (a2b +++ a2c) >>> (b2c +++ c2a) >>> (c2a +++ a2b) >>> (a2c ||| b2c)
   log $ ("loop: " <> _) $ show $ let Function' a2a = unfirst (Function' ooo) in a2a $ a2a A
-  log $ ("loopEff: " <> _) $ show $ let Function' a2a = unfirst (Function' iii) in a2a $ a2a A
+  log $ ("loop2: " <> _) $ show $ let Function' f = unfirst (Function' iii) in f true
   pure unit
   where
   ooo :: (Tuple A (Maybe Int)) -> (Tuple A (Maybe Int))
@@ -42,13 +43,10 @@ main = do
             pure $ c + 1
     Tuple a _ -> Tuple a $ Just $ unsafePerformEffect $ (log "ooo") >>= \_ -> pure 0
 
-  iii :: (Tuple A (Effect Unit)) -> (Tuple A (Effect Unit))
-  iii (Tuple A eff) =
-    Tuple A
-      $ do
-          eff
-          log "never run"
-          pure unit
+  iii :: (Tuple Boolean (Unit -> Int)) -> (Tuple Boolean (Unit -> Int))
+  iii (Tuple reset lazy) = case reset of
+    true -> Tuple false \_ -> spy "iii" 0
+    false -> Tuple false $ \_ -> spy "iii" $ 1 + lazy unit
 
   a2b A = B
 
