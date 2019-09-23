@@ -14,6 +14,9 @@ main = do
   log "Existential Types Demo"
   pure unit
 
+-- https://pursuit.purescript.org/packages/purescript-exists/4.0.0/docs/Data.Exists
+-- https://ja.wikibooks.org/wiki/Haskell/存在量化された型
+-- 
 -- haskell の
 --          + MkT :: forall a. a -> T
 -- data T = (forall a. MkT a)
